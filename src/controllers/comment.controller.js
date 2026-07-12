@@ -1,10 +1,9 @@
 const prisma=require('../lib/prisma');
 
 async function createComment(req,res){
-
     try{
             const {text}=req.body; // {} means object destructing
-            const authorId=req.params // authorId is already a string so it doesnt require object destructing
+            const authorId=req.user.id// authorId is already a string so it doesnt require object destructing
             const {postId}=req.params;
 
             const isPostThere=await prisma.post.findFirst({
@@ -20,17 +19,17 @@ async function createComment(req,res){
                 })
             }
 
-            const isAuthorValid=await prisma.user.findUnique({
-                where:{
-                    id:authorId
-                }
-            })
+            // const isAuthorValid=await prisma.user.findUnique({
+            //     where:{
+            //         id:authorId
+            //     }
+            // })
 
-            if(!isAuthorValid){
-                return res.status(401).json({
-                    message:"The author isnt valid"
-                })
-            }
+            // if(!isAuthorValid){
+            //     return res.status(401).json({
+            //         message:"The author isnt valid"
+            //     })
+            // }
 
             const comment=await prisma.comment.create({
                 data:{
@@ -48,7 +47,8 @@ async function createComment(req,res){
         console.log(err);
         return res.status(500).json({
             message:"Internal server error",
-            //err  -- dont show the error to the user , during debugging it is fine , but never do in production
+            err
+            // err  -- dont show the error to the user , during debugging it is fine , but never do in production
         })
     }
 

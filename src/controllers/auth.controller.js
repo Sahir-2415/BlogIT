@@ -6,7 +6,7 @@ const prisma = require('../lib/prisma');
 /* Now prisma has become a gateway to the database */
 
 async function registerUser(req, res) {
-    const { id, name, email, role, password } = req.body;
+    const { name, email, role, password } = req.body;
 
     // email is unique in your Prisma schema
     const ifUserAlreadyExists = await prisma.user.findUnique({
@@ -23,7 +23,7 @@ async function registerUser(req, res) {
 
     const user = await prisma.user.create({
         data: {
-            id, // Prisma field name is `id`
+            // id, // Prisma field name is `id`
             name,
             email,
             password: hash,
@@ -45,6 +45,7 @@ async function registerUser(req, res) {
         message: "User created successfully",
         user
     });
+    console.log(user);
 }
 
 async function LoginUser(req,res){
