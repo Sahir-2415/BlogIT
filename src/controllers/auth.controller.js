@@ -306,5 +306,75 @@ async function forgotPassword(req,res){
     
 }
 
-module.exports = { registerUser,LoginUser,logoutUser,verifyEmail,forgotPassword };
+async function resetPassword(req,res){
+
+    try{
+        const {token,password}=req.body;
+
+        if(!token || !password){
+            return res.status(400).json({
+                message:"Token and password are required"
+            })
+        }
+
+        //Find reset Token
+        const resetToken=await prisma.passwordResetToken.findUnique({
+            where:{
+                token
+            }
+        })
+
+        if(!resetToken){
+            return res.status(400).json({
+                message:"Invalid password reset token"
+            })
+        }
+
+        //expiry token
+        if(resetToken.expiresAt<new Date()){
+            await prisma.passwordResetToken.delete({
+                where:{
+                    id:passwordResetToken.id
+                }
+            })
+            return res.status(400).json({
+                message:"Password reset token has expired."
+            })
+        }
+
+        // hash password
+        const hashPassword=await bcrypt.hash(password,10)
+
+        //update the hash password in the db and delete the token at that time only
+        await prisma.$transaction([
+            prisma.user.update({
+                where:{
+                    id:resetToken.userId
+                },
+                data:{
+                    password:hashPassword
+                }
+            }),
+            prisma.passwordResetToken.delete({
+                where:{
+                    id:resetToken.id
+                }
+            })
+        ])
+
+        return res.status(200).json({
+            message:"Password reset successful"
+        })
+    }catch(err){
+        console.log(err);
+        return res.status(400).json({
+            message:"Internal server error."
+        })
+    }
+
+    
+
+}
+
+module.exports = { registerUser,LoginUser,logoutUser,verifyEmail,forgotPassword,resetPassword };
 

@@ -27,8 +27,173 @@ async function createPost(req,res){
     
 }
 
-async function getPosts(req,res){
-    
+async function getAllPosts(req,res){
+    const {id}=req.params;
+
+    const user=await prisma.user.findUnique({
+        where:{
+            id,
+            
+        }
+    })
+    if(!user){
+        return res.status(404).json({
+            message:"User not found"
+        })
+    }
+
+    const posts=await prisma.post.findMany({
+        where:{
+            authorId:id,
+            published:true
+        }
+    })
+
+    if(posts.length===0){ // not doing !posts bcz empty array is truthy in JS and will never be true
+        return res.status(401).json({
+            message:"No posts avaliable"
+        })
+    }
+
+    return res.status(200).json({
+        message:"Posts fetched successfully",
+        posts
+    })
 }
 
-module.exports={createPost}
+async function publishPost(req,res){
+    try{
+        const {id}=req.params;
+
+        //find the id of the post you want to publish
+        const post=await prisma.post.findUnique({
+            where:{
+                id:id
+            }
+        })
+    if(!post){
+        return res.status(404).json({
+            message:"The user does not exist"
+        })
+    }
+
+
+
+    // does the current owner own this post ?? ->Flow : if the author of the post is same as the person making this request
+
+    if(post.authorId!==req.user.id){
+        return res.status(403).json({
+            message:"Post not found"
+        })
+    }
+    //already published?
+    if(post.published){
+        return res.status(400).json({
+            message:"Post is already published"
+        })
+    }
+
+
+    // publish=true , means publish the post 
+    const updatedPost=await prisma.post.update({
+        where:{
+            id:id
+        },
+        data:{
+            published:true
+        }
+    })
+
+    return res.status(200).json({
+
+        message:"The post has been published."
+
+    })
+
+    
+
+    }catch(err){
+        console.log(err);
+        return res.status(500).json({
+            message:"Internal server error"
+        })
+    }
+}
+
+
+async function unpublishPost(req,res){
+    try{
+        const {id}=req.params;
+        const post=await prisma.post.findUnique({
+            where:{
+                id
+            }
+        })
+
+        if(!post){
+            return res.status(404).json({
+                message:"The post does not exists"
+            })
+        }
+
+        if(post.authorId!==req.user.id){
+            return res.status(403).json({
+                message:"Post not found"
+            })
+        }
+
+        //check if already unpublished
+
+        if(!post.published){
+            return res.status(400).json({
+                message:"The post is already unpublished"
+            })
+        }
+
+        const updatedPost=await prisma.post.update({
+            where:{
+                id
+            },
+            data:{
+                published:false
+            }
+        })
+
+        return res.status(200).json({
+            message:"The post is unpublished successfully"
+        })
+
+    }catch(err){
+        console.log(err);
+        return res.status(500).json({
+            message:"Internal server error"
+        })
+    }
+}
+
+async function getMyDrafts(req,res){
+    try{
+        const drafts=await prisma.post.findMany({
+            where:{
+                authorId:req.user.id,
+                published:false
+            },
+            orderBy:{
+                createdAt:"desc"
+            }
+        });
+
+        return res.status(200).json({
+            count:drafts.length,
+            drafts
+        })
+
+    }catch(err){
+        console.log(err);
+        return res.status(500).json({
+            message:"Internal server error"
+        })
+    }
+}
+
+module.exports={createPost,publishPost,unpublishPost,getMyDrafts,getAllPosts}

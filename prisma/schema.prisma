@@ -21,6 +21,7 @@ model User{
   role Role @default(USER)
   createdAt DateTime @default(now())
   profilePicture String?
+  profilePicturePublicId String?
   bio String? 
   isVerified Boolean @default(false)
   VerificationToken VerificationToken[]
@@ -64,6 +65,7 @@ model Post{
 
   comments Comment[]
 }
+
 
 model Comment{
   id String @id @default(uuid())
