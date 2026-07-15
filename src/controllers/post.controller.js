@@ -9,7 +9,7 @@ async function createPost(req,res){
                 title,
                 content,
                 published,
-                authorId
+                authorId,
             }
     })
 
@@ -18,7 +18,7 @@ async function createPost(req,res){
         post:{
             id:post.id,
             title:post.title,
-            createdAt:post.createdAt
+            createdAt:post.createdAt,
         }
     })
     }catch(err){
@@ -33,7 +33,6 @@ async function getAllPosts(req,res){
     const user=await prisma.user.findUnique({
         where:{
             id,
-            
         }
     })
     if(!user){
@@ -46,11 +45,14 @@ async function getAllPosts(req,res){
         where:{
             authorId:id,
             published:true
+        },
+        include:{
+            category:true
         }
     })
 
     if(posts.length===0){ // not doing !posts bcz empty array is truthy in JS and will never be true
-        return res.status(401).json({
+        return res.status(404).json({
             message:"No posts avaliable"
         })
     }
@@ -73,7 +75,7 @@ async function publishPost(req,res){
         })
     if(!post){
         return res.status(404).json({
-            message:"The user does not exist"
+            message:"Post not found"
         })
     }
 
@@ -83,7 +85,7 @@ async function publishPost(req,res){
 
     if(post.authorId!==req.user.id){
         return res.status(403).json({
-            message:"Post not found"
+            message:"You are not authorized to publish this post"
         })
     }
     //already published?
@@ -106,7 +108,8 @@ async function publishPost(req,res){
 
     return res.status(200).json({
 
-        message:"The post has been published."
+        message:"The post has been published.",
+        updatedPost
 
     })
 
@@ -196,4 +199,135 @@ async function getMyDrafts(req,res){
     }
 }
 
-module.exports={createPost,publishPost,unpublishPost,getMyDrafts,getAllPosts}
+// used by admin to create category
+async function createCategory(req,res){
+    const {name}=req.body;
+
+    try{
+
+        const existingCategory=await prisma.category.findUnique({
+            where:{
+                name
+            }
+        })
+
+        if(existingCategory){
+            return res.status(409).json({
+                message:"Category already exists."
+            })
+        }
+
+        const newCategory=await prisma.category.create({
+            data:{
+                name   
+            }
+        })
+
+        return res.status(201).json({
+            message:"Category created successfully",
+            newCategory
+        })
+    }catch(err){
+        return res.status(500).json({
+            message:"Internal Server error"
+        })
+    }
+
+}
+
+// used by frontend in a drop box
+async function getAllCategories(req,res){
+    try{
+        const categories=await prisma.category.findMany({
+            orderBy:{
+                name:"asc"
+            }
+        })
+
+        if(categories.length===0){
+            return res.status(401).json({
+                message:"No category avaliable"
+            })
+        }
+        return res.status(200).json({
+            message:"Categories returned successfully",
+            categories
+        })
+    }catch(err){
+        console.error(err);
+
+        return res.status(500).json({
+            message: "Internal server error"
+        });
+    }
+}
+
+async function updateCategory(req,res){
+    try{    
+        const {id}=req.params
+        const {name}=req.body
+        const category=await prisma.category.findUnique({
+            where:{
+                id
+            }
+        })
+        if(!category){
+            return res.status(401).json({
+                message:"No category like this"
+            })
+        }
+
+        const updatedCategory=await prisma.category.update({
+            where:{
+                id
+            },
+            data:{
+                name:name
+            }
+        })
+        return res.status(200).json({
+            message:"Categories updated successfully",
+            updatedCategory
+        })
+    }catch(err){
+        console.error(err);
+
+        return res.status(500).json({
+            message: "Internal server error"
+        });
+    }
+    
+}
+async function deleteCategory(req,res){
+    try{    
+        const {id}=req.params
+        const category=await prisma.category.findUnique({
+            where:{
+                id
+            }
+        })
+        if(!category){
+            return res.status(404).json({
+                message:"No category like this exists"
+            })
+        }
+
+        await prisma.category.delete({
+            where:{
+                id
+            }
+        })
+        return res.status(200).json({
+            message:"Categories deleted successfully",
+        })
+    }catch(err){
+        console.error(err);
+
+        return res.status(500).json({
+            message: "Internal server error"
+        });
+    }
+    
+}
+
+module.exports={createPost,publishPost,unpublishPost,getMyDrafts,getAllPosts,createCategory,getAllCategories,updateCategory,deleteCategory}

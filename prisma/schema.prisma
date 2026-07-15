@@ -62,10 +62,17 @@ model Post{
   updatedAt DateTime @updatedAt
   author User @relation(fields:[authorId],references:[id])
   authorId String
-
+  categoryId String?
+  category Category? @relation(fields:[categoryId],references:[id])
   comments Comment[]
 }
 
+model Category{
+  id String @id @default(uuid())
+  name String @unique
+  createdAt DateTime @default(now())
+  posts Post[]
+}
 
 model Comment{
   id String @id @default(uuid())
