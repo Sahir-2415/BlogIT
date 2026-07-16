@@ -5,9 +5,13 @@ const postRoutes=require('./routes/postRoutes');
 const commentRoutes=require('./routes/comment.routes');
 const userRoutes=require('./routes/user.routes');
 const cookieParser=require('cookie-parser');
+
+const {apiLimiter}=require('./middlewares/rateLimit.middleware');
+
 // const postController=require('./controllers/post.controller');
 app.use(express.json());
 app.use(cookieParser())
+app.use(apiLimiter)
 // app.post('/api/posts', (req, res) => {
 //   console.log('POST /api/posts hit');
 //   return res.status(201).json({ ok: true });

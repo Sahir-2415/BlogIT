@@ -16,4 +16,8 @@ router.get('/categories',authMiddleware.authAdmin,postController.getAllCategorie
 router.patch('/categories/:id',authMiddleware.authAdmin,postController.updateCategory);
 router.delete('/categories/:id',authMiddleware.authAdmin,postController.deleteCategory);
 
+
+router.get('/search',postController.search);
+router.get('/',postController.getAllPosts);
+
 module.exports=router;

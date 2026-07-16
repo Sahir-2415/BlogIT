@@ -1,10 +1,10 @@
 const express=require('express');
 const router=express.Router();
 const authController=require('../controllers/auth.controller');
-
-router.post('/register',authController.registerUser);
-router.post('/login',authController.LoginUser);
+const {authLimiter}=require('../middlewares/rateLimit.middleware');
+router.post('/register',authLimiter,authController.registerUser);
+router.post('/login',authLimiter,authController.LoginUser);
 router.get("/verify-email",authController.verifyEmail);
-router.post('/forgot-password',authController.forgotPassword)
+router.post('/forgot-password',authLimiter,authController.forgotPassword)
 router.post('/reset-password',authController.resetPassword);
 module.exports=router;

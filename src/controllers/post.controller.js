@@ -28,6 +28,53 @@ async function createPost(req,res){
 }
 
 async function getAllPosts(req,res){
+    // const {page,limit}=req.query; -> this will return string and we dont want that
+
+    try{
+        const page=parseInt(req.query.page)|| 1;
+        const limit=parseInt(req.query.limit)||10;
+        const skip=(page-1)*limit; // prisma doesnt understand page , soo this is required to tell how many rows to skip
+
+        const totalPosts=await prisma.post.count({ // count total posts , for the frontend to know how many posts exist
+            where:{
+                published:true
+            }
+        })
+
+        const posts=await prisma.post.findMany({
+            where:{
+                published:true
+            },
+            skip,    // skip : 5 -> ignore first 5 posts 
+            take:limit,      // take:5  ->return next 5 posts
+            orderBy:{
+                createdAt:"desc"
+            }
+        })
+
+        const totalPages=Math.ceil(totalPosts/limit);
+
+        return res.status(200).json({
+            message:"Posts fetched successfully",
+            page,
+            limit,
+            totalPosts,
+            totalPages,
+            count:posts.length,
+            posts
+        })
+    }catch(err){
+        return res.status(500).json({
+            message:"Internal Server Error"
+        })
+    }
+
+    
+}
+
+async function getAllPostsByUser(req,res){
+    
+
     const {id}=req.params;
 
     const user=await prisma.user.findUnique({
@@ -330,4 +377,46 @@ async function deleteCategory(req,res){
     
 }
 
-module.exports={createPost,publishPost,unpublishPost,getMyDrafts,getAllPosts,createCategory,getAllCategories,updateCategory,deleteCategory}
+async function search(req,res){
+    try{
+        const {q}=req.query;
+        if(!q){
+            return res.status(400).json({
+                message:"Search Query is required"
+            })
+        }
+
+        const posts=await prisma.post.findMany({
+            where:{
+                published:true,
+                OR:[
+                    {
+                        title:{
+                            contains:q,
+                            mode:"insensitive"
+                        },
+                    },
+                    {
+                        content:{
+                            contains:q,
+                            mode:"insensitive"
+                        }
+                    }
+                ]
+            }
+        })
+        
+        return res.status(200).json({
+            count:posts.length,
+            posts
+        })
+    }catch(err){
+        return res.status(500).json({
+            message:"Internal server error",
+            error:err.message
+        })
+    }
+    
+}
+
+module.exports={createPost,publishPost,unpublishPost,getMyDrafts,getAllPosts,createCategory,getAllCategories,updateCategory,deleteCategory,search,getAllPostsByUser}
