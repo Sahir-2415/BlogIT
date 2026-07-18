@@ -1,9 +1,6 @@
 require('dotenv').config();
 const nodemailer=require('nodemailer');
 
-    console.log(process.env.EMAIL_USER);
-    console.log(process.env.EMAIL_PASS);
-
     // transporter - mail delivery truck
     const transporter=nodemailer.createTransport({
         service:"gmail",
