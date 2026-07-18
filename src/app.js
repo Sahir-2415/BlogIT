@@ -6,12 +6,24 @@ const commentRoutes=require('./routes/comment.routes');
 const userRoutes=require('./routes/user.routes');
 const cookieParser=require('cookie-parser');
 const helmet=require('helmet');
+const cors=require('cors');
 
+const {swaggerUi,swaggerSpec}=require("./config/swagger");
 const {apiLimiter}=require('./middlewares/rateLimit.middleware');
 
 // const postController=require('./controllers/post.controller');
 app.use(express.json());
 app.use(cookieParser())
+app.use(cors({
+    origin:'https://localhost:5173',
+    credentials:true
+}))
+app.use(
+    "/api/docs",
+    swaggerUi.serve,
+    swaggerUi.setup(swaggerSpec)
+)
+
 app.use(helmet()) // helmet adds HTTP security headers
 app.use(apiLimiter)
 // app.post('/api/posts', (req, res) => {

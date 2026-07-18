@@ -16,7 +16,24 @@ router.get('/categories',authMiddleware.authAdmin,postController.getAllCategorie
 router.patch('/categories/:id',authMiddleware.authAdmin,postController.updateCategory);
 router.delete('/categories/:id',authMiddleware.authAdmin,postController.deleteCategory);
 
-
+/**
+ * @swagger
+ * /api/posts/search:
+ *   get:
+ *     summary: Search posts
+ *     tags:
+ *       - Posts
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Search keyword
+ *     responses:
+ *       200:
+ *         description: Posts found successfully
+ */
 router.get('/search',postController.search);
 router.get('/',postController.getAllPosts);
 
